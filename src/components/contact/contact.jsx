@@ -1,5 +1,7 @@
 "use client";
+import { Description } from "@radix-ui/react-dialog";
 import { motion } from "framer-motion";
+import { Phone } from "lucide-react";
 import { useState } from "react";
 
 // Comprehensive list of country codes
@@ -192,119 +194,124 @@ const countryOptions = [
   { value: "+263", label: "(+263) 🇿🇼 Zimbabwe" }
   ]
 
-export default function Contact() {
-  const [selectedCountry, setSelectedCountry] = useState(countryOptions[0].value);
-  const [mobileNumber, setMobileNumber] = useState("");
-  const [filteredCountries, setFilteredCountries] = useState(countryOptions);
-
-  const handleMobileChange = (e) => {
-    const value = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
-    setMobileNumber(value);
-  };
-
-  return (
-    <div className="flex flex-col justify-center items-center bg-gray-50 p-6 pt-24"> {/* Adjusted padding-top */}
-      <motion.h1
-        initial={{ opacity: 0, y: -50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="text-3xl font-bold text-gray-900 mb-6"
-      >
-        Contact Me
-      </motion.h1>
-
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-        className="text-gray-700 text-center mb-8 max-w-md"
-      >
-        Get in touch for your <strong>digital visiting card</strong>. Fill out the form below, and I’ll get back to you as soon as possible.
-      </motion.p>
-
-      {/* Contact Form */}
-      <motion.form
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="bg-white shadow-lg rounded-lg p-6 w-full max-w-2xl"
-      >
-        <div className="mb-4">
-          <label className="block text-gray-700 font-medium">Name</label>
-          <input
-            type="text"
-            className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-            placeholder="Your Name"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-gray-700 font-medium">Email</label>
-          <input
-            type="email"
-            className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-            placeholder="Your Email"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-gray-700 font-medium mb-1">Mobile Number</label>
-          <div className="flex flex-col">
-            {/* Search Input for Country Codes */}
-            <input
-              type="text"
-              placeholder="Search country code..."
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition mb-2"
-              onChange={(e) => {
-                const searchTerm = e.target.value.toLowerCase();
-                const filteredOptions = countryOptions.filter((option) =>
-                  option.label.toLowerCase().includes(searchTerm)
-                );
-                setFilteredCountries(filteredOptions);
-              }}
-            />
-            {/* Country Code Select and Mobile Input */}
-            <div className="flex">
-              <select
-                value={selectedCountry}
-                onChange={(e) => setSelectedCountry(e.target.value)}
-                className="w-1/3 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-              >
-                {filteredCountries.map((option, index) => (
-                  <option key={index} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="tel"
-                className="w-2/3 ml-2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                placeholder="Enter Mobile No"
-                maxLength="10"
-                value={mobileNumber}
-                onChange={handleMobileChange}
+  export default function Contact() {
+    const initialData = { name: "", email: "", phone: "", description: "" };
+    const [selectedCountry, setSelectedCountry] = useState(countryOptions[0].value);
+    const [mobileNumber, setMobileNumber] = useState("");
+    const [filteredCountries, setFilteredCountries] = useState(countryOptions);
+    const [formData, setFormData] = useState(initialData);
+  
+    // Handle input changes
+    const handleChange = (event) => {
+      setFormData((prevData) => ({
+        ...prevData,
+        [event.target.name]: event.target.value,
+      }));
+    };
+  
+    // Handle mobile number input
+    const handleMobileChange = (e) => {
+      const value = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
+      setMobileNumber(value);
+    };
+  
+    // Handle form submission
+    const handleSubmit = async (event) => {
+      event.preventDefault(); // Prevent page reload
+  
+      // Concatenate country code with mobile number
+      const fullPhoneNumber = `${selectedCountry} ${mobileNumber}`;
+  
+      try {
+        const response = await fetch("http://localhost:8080/api/contact/email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ...formData, phone: fullPhoneNumber }), // Send full number
+        });
+  
+        if (!response.ok) {
+          throw new Error("Failed to send message");
+        }
+  
+        const data = await response.json();
+        console.log("Response:", data);
+        alert("Message sent successfully!");
+  
+        // Reset form after submission
+        setFormData(initialData);
+        setMobileNumber(""); // Clear mobile input separately
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Failed to send message. Please try again.");
+      }
+    };
+  
+    return (
+      <div className="flex flex-col justify-center items-center bg-gray-50 p-6 pt-24">
+        <motion.h1 initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-3xl font-bold text-gray-900 mb-6">
+          Contact Me
+        </motion.h1>
+  
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} className="text-gray-700 text-center mb-8 max-w-md">
+          Get in touch for your <strong>digital visiting card</strong>. Fill out the form below, and I’ll get back to you as soon as possible.
+        </motion.p>
+  
+        {/* Contact Form */}
+        <motion.form onSubmit={handleSubmit} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="bg-white shadow-lg rounded-lg p-6 w-full max-w-2xl">
+          {/* Name Field */}
+          <div className="mb-4">
+            <label className="block text-gray-700 font-medium">Name</label>
+            <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" placeholder="Your Name" />
+          </div>
+  
+          {/* Email Field */}
+          <div className="mb-4">
+            <label className="block text-gray-700 font-medium">Email</label>
+            <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" placeholder="Your Email" />
+          </div>
+  
+          {/* Mobile Number Section */}
+          <div className="mb-4">
+            <label className="block text-gray-700 font-medium mb-1">Mobile Number</label>
+            <div className="flex flex-col">
+              {/* Search Input for Country Codes */}
+              <input type="text" placeholder="Search country code..." className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition mb-2"
+                onChange={(e) => {
+                  const searchTerm = e.target.value.toLowerCase();
+                  const filteredOptions = countryOptions.filter((option) => option.label.toLowerCase().includes(searchTerm));
+                  setFilteredCountries(filteredOptions);
+                }}
               />
+  
+              {/* Country Code Select and Mobile Input */}
+              <div className="flex">
+                <select value={selectedCountry} onChange={(e) => setSelectedCountry(e.target.value)} className="w-1/3 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                  {filteredCountries.map((option, index) => (
+                    <option key={index} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+  
+                <input type="tel" className="w-2/3 ml-2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" placeholder="Enter Mobile No" maxLength="10" value={mobileNumber} onChange={handleMobileChange} />
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-gray-700 font-medium">Message</label>
-          <textarea
-            className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-            placeholder="Your Message"
-            rows="4"
-          ></textarea>
-        </div>
-
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="w-full bg-blue-600 text-white font-medium py-3 rounded-lg hover:bg-blue-700 transition"
-        >
-          Send Message
-        </motion.button>
-      </motion.form>
-    </div>
-  );
-}
+  
+          {/* Message Field */}
+          <div className="mb-4">
+            <label className="block text-gray-700 font-medium">Message</label>
+            <textarea name="description" value={formData.description} onChange={handleChange} className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition" placeholder="Your Message" rows="4"></textarea>
+          </div>
+  
+          {/* Submit Button */}
+          <motion.button type="submit" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full bg-blue-600 text-white font-medium py-3 rounded-lg hover:bg-blue-700 transition">
+            Send Message
+          </motion.button>
+        </motion.form>
+      </div>
+    );
+  }
+  
