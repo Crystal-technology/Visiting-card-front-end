@@ -48,15 +48,20 @@ export default function Header() {
           <Link href="/contact-us" className="text-gray-700 hover:text-blue-600">
             Contact
           </Link>
+          <Link href="/login" className="text-gray-700 hover:text-blue-600">
+            Login
+          </Link>
+          <Link href="/sign-up" className="text-gray-700 hover:text-blue-600">
+            Sign-Up
+          </Link>
         </nav>
       </div>
 
       {/* Mobile Menu Slide-in from Right */}
       <div
         ref={menuRef}
-        className={`fixed top-0 right-0 h-full w-2/3 max-w-xs bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        } md:hidden`}
+        className={`fixed top-0 right-0 h-full w-2/3 max-w-xs bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "translate-x-full"
+          } md:hidden`}
       >
         <button
           className="absolute top-4 right-4 text-gray-900"
