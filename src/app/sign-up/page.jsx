@@ -1,14 +1,15 @@
 "use client";
-import { Info } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+
+import { Eye, EyeOff, Info } from "lucide-react";
+import { useState } from "react";
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const tooltipRef = useRef(null);
+  const [ErrorMessage, setErrorMessage] = useState(false);
+  
 
   const [formData, setFormData] = useState({
     name: "",
@@ -199,9 +200,11 @@ const Signup = () => {
             {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
           </div>
 
-<div className="space-y-2">
-            <div className="flex gap-1 items-center">
-              <label className="block text-sm font-medium text-gray-700">Password</label>
+          {/* Password Field */}
+          <div className="space-y-2 relative">
+            <label htmlFor="password" className="flex gap-3 text-sm font-medium text-gray-700">
+              Password
+               {/* Info Tooltip */}
               <div
                 className="relative z-10"
                 onMouseEnter={() => setShowTooltip(true)}
@@ -220,17 +223,35 @@ const Signup = () => {
                     </ul>
                   </div>
                 )}
+                </div>
+            </label>
+            <div className="flex items-center space-x-2">
+              <div className="relative w-full">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onFocus={() => setPasswordFocused(true)}
+                  onBlur={() => setPasswordFocused(false)}
+                  onChange={handleChange}
+                  className="w-full pr-10 px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 border-gray-300"
+                  placeholder="Enter Password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
-            </div>
-            <input
-              name="password"
-              type={showPassword ? "text" : "password"}
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 border-gray-300"
-              placeholder="Enter Password"
-            />
-            {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
+             </div>
+             {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
+            {/* Password Strength Indicator */}
+            {formData.password.length >= 8 && (
+              <p className="text-sm font-semibold text-green-600">{getPasswordStrength()}</p>
+            )}
           </div>
 
           {/* Confirm Password */}
@@ -259,7 +280,7 @@ const Signup = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-purple-600 text-white py-2.5 rounded-lg font-medium hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors"
+            className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:blue-500 focus:ring-offset-2 transition-colors"
           >
             {loading ? "Signing up..." : "Sign Up"}
           </button>
