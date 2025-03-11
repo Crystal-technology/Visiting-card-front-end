@@ -1,6 +1,6 @@
 "use client";
 import { Info } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -8,6 +8,7 @@ const Signup = () => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const tooltipRef = useRef(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -32,11 +33,23 @@ const Signup = () => {
     { label: "At least 1 special character (@$!%*?&)", regex: /[@$!%*?&]/ },
   ];
 
-  const getPasswordStrength = () => {
-    if (formData.password.length >= 12) return "Too Strong";
-    if (formData.password.length >= 8) return "Strong password";
-    return "";
+  const handleClickOutside = (event) => {
+    if (tooltipRef.current && !tooltipRef.current.contains(event.target)) {
+      setShowTooltip(false);
+    }
   };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+  // const getPasswordStrength = () => {
+  //   if (formData.password.length >= 12) return "Too Strong";
+  //   if (formData.password.length >= 8) return "Strong password";
+  //   return "";
+  // };
 
   const validateForm = () => {
     let isValid = true;
@@ -186,36 +199,34 @@ const Signup = () => {
             {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
           </div>
 
-          {/* Password */}
-          <div className="space-y-2">
-            <div className="flex gap-1">
-            <label className="block text-sm font-medium text-gray-700">Password</label>
-            <p className="text-[#ed0707] text-[1.2vw] mt-[-8px]">*</p>
-             {/* Info Tooltip */}
-             <div
+<div className="space-y-2">
+            <div className="flex gap-1 items-center">
+              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <div
                 className="relative z-10"
                 onMouseEnter={() => setShowTooltip(true)}
-                onMouseLeave={() => setShowTooltip(false)}
+                ref={tooltipRef}
               >  
-              <Info className="h-5 w-5 text-gray-500 cursor-pointer" />
-                {showTooltip && (
-                    <div className="absolute left-5 top-0 bg-gray-800 text-white text-xs rounded-lg p-2 w-56 shadow-lg">
+                <Info className="h-5 w-5 text-gray-500 cursor-pointer" />
+                {(showTooltip || formData.password) && (
+                  <div className="absolute left-5 top-0 bg-gray-800 text-white text-xs rounded-lg p-2 w-56 shadow-lg">
                     <p>Password must include:</p>
                     <ul className="list-disc ml-4">
-                      {passwordConditions.map(({ label }, index) => (
-                          <li key={index}>{label}</li>
-                        ))}
+                      {passwordConditions.map(({ label, regex }, index) => (
+                        <li key={index} className={regex.test(formData.password) ? "text-green-500" : "text-gray-400"}>
+                          {label}
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 )}
-                </div>
-                </div>
+              </div>
+            </div>
             <input
               name="password"
               type={showPassword ? "text" : "password"}
               value={formData.password}
               onChange={handleChange}
-              onBlur={handleBlur}
               className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 border-gray-300"
               placeholder="Enter Password"
             />
