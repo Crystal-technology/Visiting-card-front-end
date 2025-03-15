@@ -1,17 +1,16 @@
 "use client";
-
-import { Eye, EyeOff, Info } from "lucide-react";
-import { useState } from "react";
+import { Info } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [ErrorMessage, setErrorMessage] = useState(false);
-  
+  const [errorMessage, setErrorMessage] = useState("");
+  const tooltipRef = useRef(null);
 
- const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
@@ -34,11 +33,23 @@ const Signup = () => {
     { label: "At least 1 special character (@$!%*?&)", regex: /[@$!%*?&]/ },
   ];
 
-  const getPasswordStrength = () => {
-    if (formData.password.length >= 12) return "Too Strong";
-    if (formData.password.length >= 8) return "Strong password";
-    return "";
+  const handleClickOutside = (event) => {
+    if (tooltipRef.current && !tooltipRef.current.contains(event.target)) {
+      setShowTooltip(false);
+    }
   };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+  // const getPasswordStrength = () => {
+  //   if (formData.password.length >= 12) return "Too Strong";
+  //   if (formData.password.length >= 8) return "Strong password";
+  //   return "";
+  // };
 
   const validateForm = () => {
     let isValid = true;
@@ -50,7 +61,7 @@ const Signup = () => {
     };
 
     if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
+      newErrors.name = "Full Name is required";
       isValid = false;
     }
 
@@ -86,35 +97,18 @@ const Signup = () => {
     return isValid;
   };
 
-  const fetchdata = async(userData)=>{
-    try{
-        setLoading(true);
-  setSuccessMessage("");
-  setErrorMessage("");
-console.log("hiiii")
-  const response = await fetch('http://localhost:5000/api/auth/signup',{
-    method : 'POST',
-    headers :{
-        'content-Type' : 'application/json',
-    },
-    body :JSON.stringify(userData)
-  });
-  console.log("res------",response)
-  if(!response.ok){
-    const errorData = await response.json(); 
-  }
-    const result= await response.json();
-    setSuccessMessage("Signup successful! 🎉");
-  console.log("Signup Response:", result);
-}
-catch (error) {
-    setErrorMessage(error.message);
-  } finally {
-    setLoading(false);
-  }
-}
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    let newErrors = { ...errors };
 
-  
+    if (!value.trim()) {
+      newErrors[name] = `${name.charAt(0).toUpperCase() + name.slice(1)} is required`;
+    } else {
+      newErrors[name] = "";
+    }
+
+    setErrors(newErrors);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -131,175 +125,150 @@ catch (error) {
     }
   };
 
-
-
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Submitting signup form...");
-  
+
+    if (!validateForm()) return;
+
     try {
       setLoading(true);
-    //   setSuccessMessage("");
       setErrorMessage("");
-  
+
       const response = await fetch("http://localhost:5000/api/auth/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData), // Use formData instead of userData
+        body: JSON.stringify(formData),
       });
-  
-      const result = await response.json(); // Parse response once
-  
+
+      const result = await response.json();
+
       if (!response.ok) {
         throw new Error(result.message || `HTTP Error: ${response.status}`);
       }
-  
-    //   setSuccessMessage("Signup successful! 🎉");
+
       console.log("Signup Response:", result);
     } catch (error) {
-    //   setErrorMessage(error.message);
       console.error("Signup Error:", error.message);
+      setErrorMessage(error.message);
     } finally {
       setLoading(false);
     }
   };
-  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-100 to-indigo-200 p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            Create an account
-          </h1>
-          <p className="text-gray-500">
-            Sign up to get started with our platform
-          </p>
-        </div>
+        <h1 className="text-3xl font-bold text-gray-900 text-center">Create an account</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Full Name */}
           <div className="space-y-2">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Full Name
-            </label>
+            <div className="flex gap-1">
+                  <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                  <p className="text-[#ed0707] text-[1.2vw] mt-[-8px]">*</p>
+            </div>
             <input
-              id="name"
               name="name"
               type="text"
               value={formData.name}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 border-gray-300"
+              onBlur={handleBlur}
+              className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 border-gray-300"
               placeholder="John Doe"
             />
             {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
           </div>
 
+          {/* Email */}
           <div className="space-y-2">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email address
-            </label>
+            <div className="flex gap-1">
+               <label className="block text-sm font-medium text-gray-700">Email address</label>
+               <p className="text-[#ed0707] text-[1.2vw] mt-[-8px]">*</p>
+            </div>
             <input
-              id="email"
               name="email"
               type="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 border-gray-300"
+              onBlur={handleBlur}
+              className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 border-gray-300"
               placeholder="you@example.com"
             />
             {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
           </div>
 
-          {/* Password Field */}
-          <div className="space-y-2 relative">
-            <label htmlFor="password" className="flex gap-3 text-sm font-medium text-gray-700">
-              Password
-               {/* Info Tooltip */}
+<div className="space-y-2">
+            <div className="flex gap-1 items-center">
+              <label className="block text-sm font-medium text-gray-700">Password</label>
               <div
                 className="relative z-10"
                 onMouseEnter={() => setShowTooltip(true)}
-                onMouseLeave={() => setShowTooltip(false)}
+                ref={tooltipRef}
               >  
-              <Info className="h-5 w-5 text-gray-500 cursor-pointer" />
-                {showTooltip && (
-                    <div className="absolute left-5 top-0 bg-gray-800 text-white text-xs rounded-lg p-2 w-56 shadow-lg">
+                <Info className="h-5 w-5 text-gray-500 cursor-pointer" />
+                {(showTooltip || formData.password) && (
+                  <div className="absolute left-5 top-0 bg-gray-800 text-white text-xs rounded-lg p-2 w-56 shadow-lg">
                     <p>Password must include:</p>
                     <ul className="list-disc ml-4">
-                      {passwordConditions.map(({ label }, index) => (
-                          <li key={index}>{label}</li>
-                        ))}
+                      {passwordConditions.map(({ label, regex }, index) => (
+                        <li key={index} className={regex.test(formData.password) ? "text-green-500" : "text-gray-400"}>
+                          {label}
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 )}
-                </div>
-            </label>
-            <div className="flex items-center space-x-2">
-              <div className="relative w-full">
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  value={formData.password}
-                  onFocus={() => setPasswordFocused(true)}
-                  onBlur={() => setPasswordFocused(false)}
-                  onChange={handleChange}
-                  className="w-full pr-10 px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 border-gray-300"
-                  placeholder="Enter Password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
               </div>
-             </div>
-             {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
-            {/* Password Strength Indicator */}
-            {formData.password.length >= 8 && (
-              <p className="text-sm font-semibold text-green-600">{getPasswordStrength()}</p>
-            )}
+            </div>
+            <input
+              name="password"
+              type={showPassword ? "text" : "password"}
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 border-gray-300"
+              placeholder="Enter Password"
+            />
+            {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
           </div>
 
-          {/* Confirm Password Field */}
-          <div className="space-y-2 relativ">
-          <div className="flex items-center space-x-2">
-          <div className="relative w-full">
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-              Confirm Password
-            </label>
+          {/* Confirm Password */}
+          <div className="space-y-2">
+            <div className="flex gap-1">
+            <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+            <p className="text-[#ed0707] text-[1.2vw] mt-[-8px]">*</p>
+            </div>
             <input
-              id="confirmPassword"
               name="confirmPassword"
               type="password"
               value={formData.confirmPassword}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg shadow-sm  focus:ring-2 focus:ring-purple-500 border-gray-300"
-              placeholder="confirm Password"
+              onBlur={handleBlur}
+              className="w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 border-gray-300"
+              placeholder="Confirm Password"
             />
-            <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-            </div>
-            </div>
             {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword}</p>}
           </div>
+          {/* Terms and Condition */}
+          <div className="flex items-center">
+             <input id="remember" type="checkbox" className="h-4 w-4 text-blue-600 border-gray-300 rounded" />
+              <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">I accept the Terms and Condition</label> 
+            </div>
 
+          {/* Submit Button */}
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:blue-500 focus:ring-offset-2 transition-colors"
           >
-            Sign up
+            {loading ? "Signing up..." : "Sign Up"}
           </button>
         </form>
+        <p className="mt-4 text-center text-[0.8vw] text-gray-600">
+          {"Already have an account?  "}
+          <a href="/login" className="text-blue-600 hover:text-blue-500">Login</a>
+        </p>
+      
       </div>
     </div>
   );
